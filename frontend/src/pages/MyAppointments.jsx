@@ -78,6 +78,27 @@ const MyAppointments = () => {
         }
     }
 
+    // Function to download prescription
+    const downloadPrescription = async (appointmentId) => {
+        try {
+            const response = await axios.post(
+                backendUrl + `/api/user/download-prescription/${appointmentId}`, 
+                {}, 
+                { headers: { token }, responseType: 'blob' }
+            )
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `prescription_${appointmentId}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (error) {
+            console.log(error)
+            toast.error('Failed to download prescription')
+        }
+    }
+
     const initPay = (order) => {
         const options = {
             key: import.meta.env.VITE_RAZORPAY_KEY_ID,
@@ -172,6 +193,7 @@ const MyAppointments = () => {
 
                             {item.isCompleted && <button className='sm:min-w-48 py-2 border border-green-500 rounded text-green-500 cursor-default'>Completed</button>}
                             {item.isCompleted && <button onClick={() => setReviewDocId(item.docId)} className='sm:min-w-48 py-2 border border-primary rounded text-primary hover:bg-primary hover:text-white transition-all duration-300'>Write Review</button>}
+                            {item.prescription && <button onClick={() => downloadPrescription(item._id)} className='sm:min-w-48 py-2 border border-gray-500 rounded text-gray-500 hover:bg-gray-500 hover:text-white transition-all duration-300'>Download Rx</button>}
 
                             {!item.cancelled && !item.isCompleted && <button onClick={() => cancelAppointment(item._id)} className='text-[#696969] sm:min-w-48 py-2 border rounded hover:bg-red-600 hover:text-white transition-all duration-300'>Cancel appointment</button>}
                             {item.cancelled && !item.isCompleted && <button className='sm:min-w-48 py-2 border border-red-500 rounded text-red-500'>Appointment cancelled</button>}

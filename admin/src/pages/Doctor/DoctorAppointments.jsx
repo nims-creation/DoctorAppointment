@@ -1,13 +1,22 @@
-import React from 'react'
-import { useContext, useEffect } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { DoctorContext } from '../../context/DoctorContext'
 import { AppContext } from '../../context/AppContext'
 import { assets } from '../../assets/assets'
 
 const DoctorAppointments = () => {
 
-  const { dToken, appointments, getAppointments, cancelAppointment, completeAppointment } = useContext(DoctorContext)
+  const { dToken, appointments, getAppointments, cancelAppointment, completeAppointment, addPrescription } = useContext(DoctorContext)
   const { slotDateFormat, calculateAge, currency } = useContext(AppContext)
+
+  const [prescriptionModal, setPrescriptionModal] = useState(null)
+  const [prescriptionText, setPrescriptionText] = useState('')
+
+  const handleAddPrescription = async () => {
+    if (!prescriptionText.trim()) return;
+    await addPrescription(prescriptionModal, prescriptionText);
+    setPrescriptionModal(null);
+    setPrescriptionText('');
+  }
 
   useEffect(() => {
     if (dToken) {
@@ -47,7 +56,10 @@ const DoctorAppointments = () => {
             {item.cancelled
               ? <p className='text-red-400 text-xs font-medium'>Cancelled</p>
               : item.isCompleted
-                ? <p className='text-green-500 text-xs font-medium'>Completed</p>
+                ? <div className='flex flex-col items-start gap-1'>
+                    <p className='text-green-500 text-xs font-medium'>Completed</p>
+                    {!item.prescription && <button onClick={() => setPrescriptionModal(item._id)} className='text-[10px] border border-primary text-primary px-2 py-1 rounded hover:bg-primary hover:text-white transition-all'>Write Rx</button>}
+                  </div>
                 : <div className='flex'>
                   <img onClick={() => cancelAppointment(item._id)} className='w-10 cursor-pointer' src={assets.cancel_icon} alt="" />
                   <img onClick={() => completeAppointment(item._id)} className='w-10 cursor-pointer' src={assets.tick_icon} alt="" />
@@ -56,6 +68,28 @@ const DoctorAppointments = () => {
           </div>
         ))}
       </div>
+
+      {/* Prescription Modal */}
+      {prescriptionModal && (
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50'>
+          <div className='bg-white p-6 rounded-lg w-[90%] sm:w-[500px] shadow-lg'>
+            <h2 className='text-lg font-semibold mb-4'>Write Prescription</h2>
+            <div className='mb-4'>
+              <textarea 
+                value={prescriptionText} 
+                onChange={(e) => setPrescriptionText(e.target.value)} 
+                className='w-full border rounded p-2' 
+                rows="6" 
+                placeholder="Medicines, dosage, instructions..."
+              />
+            </div>
+            <div className='flex justify-end gap-3'>
+              <button onClick={() => setPrescriptionModal(null)} className='px-4 py-2 text-gray-500 border rounded hover:bg-gray-100'>Cancel</button>
+              <button onClick={handleAddPrescription} className='px-4 py-2 bg-primary text-white rounded hover:opacity-90'>Save & Send</button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   )

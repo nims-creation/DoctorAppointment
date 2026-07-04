@@ -88,6 +88,25 @@ const appointmentComplete = async (req, res) => {
 
 }
 
+// API to add prescription to appointment
+const addPrescription = async (req, res) => {
+    try {
+        const { docId, appointmentId, prescription } = req.body;
+
+        const appointmentData = await appointmentModel.findById(appointmentId);
+        if (appointmentData && appointmentData.docId === docId) {
+            await appointmentModel.findByIdAndUpdate(appointmentId, { prescription });
+            return res.json({ success: true, message: 'Prescription Added' });
+        }
+
+        res.json({ success: false, message: 'Appointment not found or unauthorized' });
+
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+}
+
 // API to get all doctors list for Frontend
 const doctorList = async (req, res) => {
     try {
@@ -199,5 +218,6 @@ export {
     appointmentComplete,
     doctorDashboard,
     doctorProfile,
-    updateDoctorProfile
+    updateDoctorProfile,
+    addPrescription
 }

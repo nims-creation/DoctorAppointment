@@ -92,6 +92,22 @@ const DoctorContextProvider = (props) => {
 
     }
 
+    // Function to add prescription using API
+    const addPrescription = async (appointmentId, prescription) => {
+        try {
+            const { data } = await axios.post(backendUrl + '/api/doctor/add-prescription', { appointmentId, prescription }, { headers: { dToken } })
+            if (data.success) {
+                toast.success(data.message)
+                getAppointments()
+            } else {
+                toast.error(data.message)
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || error.message)
+            console.log(error)
+        }
+    }
+
     // Getting Doctor dashboard data using API
     const getDashData = async () => {
         try {
@@ -120,6 +136,7 @@ const DoctorContextProvider = (props) => {
         dashData, getDashData,
         profileData, setProfileData,
         getProfileData,
+        addPrescription
     }
 
     return (

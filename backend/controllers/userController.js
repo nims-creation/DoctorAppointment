@@ -8,6 +8,7 @@ import { v2 as cloudinary } from 'cloudinary'
 import stripe from "stripe";
 import sendEmail from "../utils/sendEmail.js";
 import razorpay from 'razorpay';
+import PDFDocument from 'pdfkit';
 
 // Gateway Initialize
 const stripeInstance = new stripe(process.env.STRIPE_SECRET_KEY)
@@ -405,6 +406,65 @@ const addReview = async (req, res) => {
     }
 };
 
+// API to download prescription as PDF
+const downloadPrescription = async (req, res) => {
+    try {
+        const { appointmentId } = req.params;
+        const { userId } = req.body;
+
+        const appointment = await appointmentModel.findById(appointmentId);
+
+        if (!appointment || appointment.userId.toString() !== userId.toString()) {
+            return res.status(404).json({ success: false, message: 'Appointment not found or unauthorized' });
+        }
+
+        if (!appointment.prescription) {
+            return res.status(400).json({ success: false, message: 'No prescription available for this appointment' });
+        }
+
+        // Initialize PDF Document
+        const doc = new PDFDocument({ margin: 50 });
+        
+        // Set response headers for PDF download
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=prescription_${appointmentId}.pdf`);
+
+        doc.pipe(res);
+
+        // Header
+        doc.fontSize(20).text('Prescripto Clinic', { align: 'center' });
+        doc.moveDown();
+        doc.fontSize(12).text(`Date: ${new Date().toLocaleDateString()}`, { align: 'right' });
+        
+        // Doctor & Patient Info
+        doc.moveDown();
+        doc.fontSize(14).text(`Doctor: ${appointment.docData.name}`);
+        doc.fontSize(12).text(`Speciality: ${appointment.docData.speciality}`);
+        doc.moveDown();
+        doc.fontSize(14).text(`Patient: ${appointment.userData.name}`);
+        
+        doc.moveDown();
+        doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+        doc.moveDown();
+        
+        // Prescription Notes
+        doc.fontSize(16).text('Prescription Details', { underline: true });
+        doc.moveDown();
+        doc.fontSize(12).text(appointment.prescription);
+
+        doc.moveDown();
+        doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+        doc.moveDown();
+        doc.fontSize(10).text('This is a computer-generated prescription.', { align: 'center' });
+
+        doc.end();
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+}
+
 export {
     loginUser,
     registerUser,
@@ -417,5 +477,6 @@ export {
     verifyRazorpay,
     paymentStripe,
     verifyStripe,
-    addReview
+    addReview,
+    downloadPrescription
 }
