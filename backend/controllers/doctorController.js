@@ -239,6 +239,25 @@ const doctorDashboard = async (req, res) => {
     }
 }
 
+// API to get chat history for doctor
+const getChatHistory = async (req, res) => {
+    try {
+        const { appointmentId } = req.params;
+        const { docId } = req.body;
+
+        const appointment = await appointmentModel.findById(appointmentId);
+        if (!appointment || appointment.docId.toString() !== docId.toString()) {
+            return res.json({ success: false, message: 'Unauthorized' });
+        }
+
+        const messages = await messageModel.find({ appointmentId }).sort({ timestamp: 1 });
+        res.json({ success: true, messages });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+}
+
 export {
     loginDoctor,
     appointmentsDoctor,
