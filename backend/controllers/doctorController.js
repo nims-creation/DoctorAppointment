@@ -110,8 +110,37 @@ const addPrescription = async (req, res) => {
 // API to get all doctors list for Frontend
 const doctorList = async (req, res) => {
     try {
+        const { page, limit, speciality } = req.query;
+        
+        let query = {};
+        if (speciality && speciality !== 'undefined' && speciality !== 'null') {
+            query.speciality = speciality;
+        }
 
-        const doctors = await doctorModel.find({}).select(['-password', '-email'])
+        if (page && limit) {
+            const pageNumber = parseInt(page);
+            const limitNumber = parseInt(limit);
+            const skip = (pageNumber - 1) * limitNumber;
+
+            const doctors = await doctorModel.find(query)
+                .select(['-password', '-email'])
+                .skip(skip)
+                .limit(limitNumber);
+            
+            const total = await doctorModel.countDocuments(query);
+            
+            return res.json({ 
+                success: true, 
+                doctors, 
+                pagination: { 
+                    total, 
+                    page: pageNumber, 
+                    pages: Math.ceil(total / limitNumber) 
+                } 
+            });
+        }
+
+        const doctors = await doctorModel.find(query).select(['-password', '-email'])
         res.json({ success: true, doctors })
 
     } catch (error) {
