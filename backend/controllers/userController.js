@@ -6,6 +6,7 @@ import doctorModel from "../models/doctorModel.js";
 import appointmentModel from "../models/appointmentModel.js";
 import { v2 as cloudinary } from 'cloudinary'
 import stripe from "stripe";
+import sendEmail from "../utils/sendEmail.js";
 import razorpay from 'razorpay';
 
 // Gateway Initialize
@@ -178,6 +179,17 @@ const bookAppointment = async (req, res) => {
         // save new slots data in docData
         await doctorModel.findByIdAndUpdate(docId, { slots_booked })
 
+        // Send email notification to user
+        try {
+            await sendEmail({
+                email: userData.email,
+                subject: 'Appointment Booked Successfully - Prescripto',
+                message: `Dear ${userData.name},\n\nYour appointment with Dr. ${docData.name} has been successfully booked for ${slotDate} at ${slotTime}.\n\nThank you for choosing Prescripto!`
+            });
+        } catch (emailError) {
+            console.log('Error sending email:', emailError.message);
+        }
+
         res.json({ success: true, message: 'Appointment Booked' })
 
     } catch (error) {
@@ -211,6 +223,20 @@ const cancelAppointment = async (req, res) => {
         slots_booked[slotDate] = slots_booked[slotDate].filter(e => e !== slotTime)
 
         await doctorModel.findByIdAndUpdate(docId, { slots_booked })
+        
+        // Send email notification to user
+        try {
+            const userData = await userModel.findById(userId);
+            if (userData) {
+                await sendEmail({
+                    email: userData.email,
+                    subject: 'Appointment Cancelled - Prescripto',
+                    message: `Dear ${userData.name},\n\nYour appointment with Dr. ${doctorData.name} scheduled for ${slotDate} at ${slotTime} has been cancelled.\n\nThank you for choosing Prescripto!`
+                });
+            }
+        } catch (emailError) {
+            console.log('Error sending email:', emailError.message);
+        }
 
         res.json({ success: true, message: 'Appointment Cancelled' })
 
