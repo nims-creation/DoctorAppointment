@@ -14,6 +14,12 @@ const doctorSchema = new mongoose.Schema({
     slots_booked: { type: Object, default: {} },
     address: { type: Object, required: true },
     date: { type: Number, required: true },
+    reviews: [{
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
+        rating: { type: Number, required: true, min: 1, max: 5 },
+        comment: { type: String, required: true },
+        date: { type: Number, required: true }
+    }]
 }, { minimize: false })
 
 const doctorModel = mongoose.models.doctor || mongoose.model("doctor", doctorSchema);

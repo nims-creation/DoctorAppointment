@@ -12,6 +12,11 @@ const MyAppointments = () => {
 
     const [appointments, setAppointments] = useState([])
     const [payment, setPayment] = useState('')
+    
+    // Review Modal States
+    const [reviewDocId, setReviewDocId] = useState(null)
+    const [rating, setRating] = useState(5)
+    const [comment, setComment] = useState('')
 
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -53,6 +58,24 @@ const MyAppointments = () => {
             toast.error(error.message)
         }
 
+    }
+
+    // Function to submit review
+    const submitReview = async () => {
+        try {
+            const { data } = await axios.post(backendUrl + '/api/user/add-review', { docId: reviewDocId, rating, comment }, { headers: { token } })
+            if (data.success) {
+                toast.success(data.message)
+                setReviewDocId(null)
+                setComment('')
+                setRating(5)
+            } else {
+                toast.error(data.message)
+            }
+        } catch (error) {
+            console.log(error)
+            toast.error(error.response?.data?.message || error.message)
+        }
     }
 
     const initPay = (order) => {
@@ -147,7 +170,8 @@ const MyAppointments = () => {
                             {!item.cancelled && !item.payment && !item.isCompleted && payment === item._id && <button onClick={() => appointmentRazorpay(item._id)} className='text-[#696969] sm:min-w-48 py-2 border rounded hover:bg-gray-100 hover:text-white transition-all duration-300 flex items-center justify-center'><img className='max-w-20 max-h-5' src={assets.razorpay_logo} alt="" /></button>}
                             {!item.cancelled && item.payment && !item.isCompleted && <button className='sm:min-w-48 py-2 border rounded text-[#696969]  bg-[#EAEFFF]'>Paid</button>}
 
-                            {item.isCompleted && <button className='sm:min-w-48 py-2 border border-green-500 rounded text-green-500'>Completed</button>}
+                            {item.isCompleted && <button className='sm:min-w-48 py-2 border border-green-500 rounded text-green-500 cursor-default'>Completed</button>}
+                            {item.isCompleted && <button onClick={() => setReviewDocId(item.docId)} className='sm:min-w-48 py-2 border border-primary rounded text-primary hover:bg-primary hover:text-white transition-all duration-300'>Write Review</button>}
 
                             {!item.cancelled && !item.isCompleted && <button onClick={() => cancelAppointment(item._id)} className='text-[#696969] sm:min-w-48 py-2 border rounded hover:bg-red-600 hover:text-white transition-all duration-300'>Cancel appointment</button>}
                             {item.cancelled && !item.isCompleted && <button className='sm:min-w-48 py-2 border border-red-500 rounded text-red-500'>Appointment cancelled</button>}
@@ -155,6 +179,39 @@ const MyAppointments = () => {
                     </div>
                 ))}
             </div>
+            
+            {/* Review Modal */}
+            {reviewDocId && (
+                <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50'>
+                    <div className='bg-white p-6 rounded-lg w-[90%] sm:w-[400px] shadow-lg'>
+                        <h2 className='text-lg font-semibold mb-4'>Write a Review</h2>
+                        <div className='mb-4'>
+                            <p className='text-sm mb-1'>Rating (1-5)</p>
+                            <input 
+                                type="number" 
+                                min="1" max="5" 
+                                value={rating} 
+                                onChange={(e) => setRating(e.target.value)} 
+                                className='w-full border rounded p-2'
+                            />
+                        </div>
+                        <div className='mb-4'>
+                            <p className='text-sm mb-1'>Comment</p>
+                            <textarea 
+                                value={comment} 
+                                onChange={(e) => setComment(e.target.value)} 
+                                className='w-full border rounded p-2' 
+                                rows="4" 
+                                placeholder="Share your experience..."
+                            />
+                        </div>
+                        <div className='flex justify-end gap-3'>
+                            <button onClick={() => setReviewDocId(null)} className='px-4 py-2 text-gray-500 border rounded hover:bg-gray-100'>Cancel</button>
+                            <button onClick={submitReview} className='px-4 py-2 bg-primary text-white rounded hover:opacity-90'>Submit</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

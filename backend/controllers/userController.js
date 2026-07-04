@@ -369,6 +369,42 @@ const verifyStripe = async (req, res) => {
 
 }
 
+// API to add doctor review
+const addReview = async (req, res) => {
+    try {
+        const { userId, docId, rating, comment } = req.body;
+
+        const doctor = await doctorModel.findById(docId);
+        if (!doctor) {
+            return res.json({ success: false, message: 'Doctor not found' });
+        }
+
+        // Check if user already reviewed
+        const alreadyReviewed = doctor.reviews.find(
+            (r) => r.userId.toString() === userId.toString()
+        );
+
+        if (alreadyReviewed) {
+            return res.json({ success: false, message: 'You have already reviewed this doctor' });
+        }
+
+        const review = {
+            userId,
+            rating: Number(rating),
+            comment,
+            date: Date.now(),
+        };
+
+        doctor.reviews.push(review);
+        await doctor.save();
+
+        res.json({ success: true, message: 'Review added successfully' });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
 export {
     loginUser,
     registerUser,
@@ -380,5 +416,6 @@ export {
     paymentRazorpay,
     verifyRazorpay,
     paymentStripe,
-    verifyStripe
+    verifyStripe,
+    addReview
 }

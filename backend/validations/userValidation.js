@@ -19,3 +19,9 @@ export const updateProfileSchema = z.object({
     dob: z.string(),
     gender: z.enum(["Male", "Female", "Not Selected"])
 });
+
+export const reviewSchema = z.object({
+    docId: z.string().min(1, "Doctor ID is required"),
+    rating: z.number().min(1, "Rating must be at least 1").max(5, "Rating cannot exceed 5"),
+    comment: z.string().min(3, "Comment must be at least 3 characters long")
+});

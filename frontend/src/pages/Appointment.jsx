@@ -130,6 +130,12 @@ const Appointment = () => {
         }
     }, [docInfo])
 
+    const calculateAverageRating = (reviews) => {
+        if (!reviews || reviews.length === 0) return 0;
+        const total = reviews.reduce((acc, curr) => acc + curr.rating, 0);
+        return (total / reviews.length).toFixed(1);
+    }
+
     return docInfo ? (
         <div>
 
@@ -147,6 +153,11 @@ const Appointment = () => {
                     <div className='flex items-center gap-2 mt-1 text-gray-600'>
                         <p>{docInfo.degree} - {docInfo.speciality}</p>
                         <button className='py-0.5 px-2 border text-xs rounded-full'>{docInfo.experience}</button>
+                    </div>
+                    <div className='flex items-center gap-1 mt-2'>
+                        <span className='text-yellow-500 text-lg'>★</span>
+                        <span className='font-medium'>{calculateAverageRating(docInfo.reviews)}</span>
+                        <span className='text-gray-500 text-sm'>({docInfo.reviews?.length || 0} reviews)</span>
                     </div>
 
                     {/* ----- Doc About ----- */}
