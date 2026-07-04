@@ -9,6 +9,7 @@ import stripe from "stripe";
 import sendEmail from "../utils/sendEmail.js";
 import razorpay from 'razorpay';
 import PDFDocument from 'pdfkit';
+import messageModel from '../models/messageModel.js';
 
 // Gateway Initialize
 const stripeInstance = new stripe(process.env.STRIPE_SECRET_KEY)
@@ -465,6 +466,25 @@ const downloadPrescription = async (req, res) => {
     }
 }
 
+// API to get chat history
+const getChatHistory = async (req, res) => {
+    try {
+        const { appointmentId } = req.params;
+        const { userId } = req.body; // from authUser middleware
+
+        const appointment = await appointmentModel.findById(appointmentId);
+        if (!appointment || appointment.userId.toString() !== userId.toString()) {
+            return res.json({ success: false, message: 'Unauthorized' });
+        }
+
+        const messages = await messageModel.find({ appointmentId }).sort({ timestamp: 1 });
+        res.json({ success: true, messages });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+}
+
 export {
     loginUser,
     registerUser,
@@ -478,5 +498,6 @@ export {
     paymentStripe,
     verifyStripe,
     addReview,
-    downloadPrescription
+    downloadPrescription,
+    getChatHistory
 }

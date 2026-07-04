@@ -4,6 +4,7 @@ import { AppContext } from '../context/AppContext'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 import { assets } from '../assets/assets'
+import { io } from 'socket.io-client'
 
 const MyAppointments = () => {
 
@@ -17,6 +18,12 @@ const MyAppointments = () => {
     const [reviewDocId, setReviewDocId] = useState(null)
     const [rating, setRating] = useState(5)
     const [comment, setComment] = useState('')
+    
+    // Chat Modal States
+    const [chatModal, setChatModal] = useState(null)
+    const [messages, setMessages] = useState([])
+    const [messageText, setMessageText] = useState('')
+    const [socket, setSocket] = useState(null)
 
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -167,6 +174,47 @@ const MyAppointments = () => {
         }
     }, [token])
 
+    // Initialize Socket and handle incoming messages
+    useEffect(() => {
+        const newSocket = io(backendUrl);
+        setSocket(newSocket);
+
+        newSocket.on("receive_message", (data) => {
+            setMessages((prev) => [...prev, data]);
+        });
+
+        return () => newSocket.close();
+    }, [backendUrl]);
+
+    const openChat = async (appointmentId) => {
+        setChatModal(appointmentId);
+        setMessages([]);
+        if (socket) {
+            socket.emit("join_room", appointmentId);
+        }
+        try {
+            const { data } = await axios.get(backendUrl + `/api/user/chat-history/${appointmentId}`, { headers: { token } });
+            if (data.success) {
+                setMessages(data.messages);
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    const sendMessage = () => {
+        if (!messageText.trim() || !socket || !chatModal) return;
+        const msgData = {
+            room: chatModal,
+            sender: 'user',
+            text: messageText,
+            timestamp: Date.now()
+        };
+        socket.emit("send_message", msgData);
+        setMessages((prev) => [...prev, msgData]);
+        setMessageText('');
+    }
+
     return (
         <div>
             <p className='pb-3 mt-12 text-lg font-medium text-gray-600 border-b'>My appointments</p>
@@ -194,6 +242,7 @@ const MyAppointments = () => {
                             {item.isCompleted && <button className='sm:min-w-48 py-2 border border-green-500 rounded text-green-500 cursor-default'>Completed</button>}
                             {item.isCompleted && <button onClick={() => setReviewDocId(item.docId)} className='sm:min-w-48 py-2 border border-primary rounded text-primary hover:bg-primary hover:text-white transition-all duration-300'>Write Review</button>}
                             {item.prescription && <button onClick={() => downloadPrescription(item._id)} className='sm:min-w-48 py-2 border border-gray-500 rounded text-gray-500 hover:bg-gray-500 hover:text-white transition-all duration-300'>Download Rx</button>}
+                            <button onClick={() => openChat(item._id)} className='sm:min-w-48 py-2 border border-blue-500 rounded text-blue-500 hover:bg-blue-500 hover:text-white transition-all duration-300'>Chat with Doctor</button>
 
                             {!item.cancelled && !item.isCompleted && <button onClick={() => cancelAppointment(item._id)} className='text-[#696969] sm:min-w-48 py-2 border rounded hover:bg-red-600 hover:text-white transition-all duration-300'>Cancel appointment</button>}
                             {item.cancelled && !item.isCompleted && <button className='sm:min-w-48 py-2 border border-red-500 rounded text-red-500'>Appointment cancelled</button>}
@@ -230,6 +279,39 @@ const MyAppointments = () => {
                         <div className='flex justify-end gap-3'>
                             <button onClick={() => setReviewDocId(null)} className='px-4 py-2 text-gray-500 border rounded hover:bg-gray-100'>Cancel</button>
                             <button onClick={submitReview} className='px-4 py-2 bg-primary text-white rounded hover:opacity-90'>Submit</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Chat Modal */}
+            {chatModal && (
+                <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50'>
+                    <div className='bg-white rounded-lg w-[90%] sm:w-[500px] shadow-lg flex flex-col h-[70vh]'>
+                        <div className='p-4 border-b flex justify-between items-center bg-gray-50 rounded-t-lg'>
+                            <h2 className='text-lg font-semibold'>Chat with Doctor</h2>
+                            <button onClick={() => setChatModal(null)} className='text-gray-500 hover:text-red-500 font-bold'>✕</button>
+                        </div>
+                        <div className='flex-1 p-4 overflow-y-scroll flex flex-col gap-3 bg-gray-100'>
+                            {messages.map((msg, idx) => (
+                                <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                    <div className={`p-3 rounded-lg max-w-[70%] text-sm ${msg.sender === 'user' ? 'bg-primary text-white rounded-tr-none' : 'bg-white text-gray-800 rounded-tl-none border'}`}>
+                                        {msg.text}
+                                    </div>
+                                </div>
+                            ))}
+                            {messages.length === 0 && <p className='text-center text-gray-400 text-sm mt-10'>No messages yet. Say hi!</p>}
+                        </div>
+                        <div className='p-4 border-t bg-white rounded-b-lg flex gap-2'>
+                            <input 
+                                type="text" 
+                                value={messageText} 
+                                onChange={(e) => setMessageText(e.target.value)} 
+                                onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+                                className='flex-1 border rounded px-3 py-2 outline-none focus:border-primary' 
+                                placeholder="Type a message..."
+                            />
+                            <button onClick={sendMessage} className='px-4 py-2 bg-primary text-white rounded hover:opacity-90'>Send</button>
                         </div>
                     </div>
                 </div>

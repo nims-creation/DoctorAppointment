@@ -1,5 +1,5 @@
 import express from 'express';
-import { loginUser, registerUser, getProfile, updateProfile, bookAppointment, listAppointment, cancelAppointment, paymentRazorpay, verifyRazorpay, paymentStripe, verifyStripe, addReview, downloadPrescription } from '../controllers/userController.js';
+import { loginUser, registerUser, getProfile, updateProfile, bookAppointment, listAppointment, cancelAppointment, paymentRazorpay, verifyRazorpay, paymentStripe, verifyStripe, addReview, downloadPrescription, getChatHistory } from '../controllers/userController.js';
 import upload from '../middleware/multer.js';
 import authUser from '../middleware/authUser.js';
 import validateRequest from '../middleware/validateRequest.js';
@@ -21,5 +21,6 @@ userRouter.post("/payment-stripe", authUser, paymentStripe)
 userRouter.post("/verifyStripe", authUser, verifyStripe)
 userRouter.post("/add-review", authUser, validateRequest(reviewSchema), addReview)
 userRouter.post("/download-prescription/:appointmentId", authUser, downloadPrescription)
+userRouter.get("/chat-history/:appointmentId", authUser, getChatHistory)
 
 export default userRouter;

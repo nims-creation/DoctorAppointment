@@ -1,6 +1,9 @@
 import express from "express"
 import cors from 'cors'
 import 'dotenv/config'
+import http from 'http'
+import { Server } from 'socket.io'
+import messageModel from './models/messageModel.js'
 import connectDB from "./config/mongodb.js"
 import connectCloudinary from "./config/cloudinary.js"
 import userRouter from "./routes/userRoute.js"
@@ -15,8 +18,48 @@ import errorHandler from './middleware/errorHandler.js';
 // app config
 const app = express()
 const port = process.env.PORT || 4000
+const server = http.createServer(app)
+const io = new Server(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+})
+
 connectDB()
 connectCloudinary()
+
+// Socket.io logic
+io.on("connection", (socket) => {
+    console.log("User connected:", socket.id);
+
+    socket.on("join_room", (room) => {
+        socket.join(room);
+        console.log(`User ${socket.id} joined room ${room}`);
+    });
+
+    socket.on("send_message", async (data) => {
+        try {
+            // Save to DB
+            const newMessage = new messageModel({
+                appointmentId: data.room, // room is appointmentId
+                sender: data.sender, // 'user' or 'doctor'
+                text: data.text,
+                timestamp: Date.now()
+            });
+            await newMessage.save();
+            
+            // Broadcast to others in the room
+            socket.to(data.room).emit("receive_message", data);
+        } catch (error) {
+            console.error("Error saving message", error);
+        }
+    });
+
+    socket.on("disconnect", () => {
+        console.log("User disconnected:", socket.id);
+    });
+});
 
 // middlewares
 app.use(helmet());
@@ -47,4 +90,4 @@ app.get("/", (req, res) => {
 // Global Error Handler
 app.use(errorHandler);
 
-app.listen(port, () => console.log(`Server started on PORT:${port}`))
+server.listen(port, () => console.log(`Server started on PORT:${port}`))

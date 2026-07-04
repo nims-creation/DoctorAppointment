@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import doctorModel from "../models/doctorModel.js";
 import appointmentModel from "../models/appointmentModel.js";
+import messageModel from "../models/messageModel.js";
 
 // API for doctor Login 
 const loginDoctor = async (req, res) => {
@@ -248,5 +249,6 @@ export {
     doctorDashboard,
     doctorProfile,
     updateDoctorProfile,
-    addPrescription
+    addPrescription,
+    getChatHistory
 }
