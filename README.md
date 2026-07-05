@@ -11,6 +11,18 @@ A **production-ready**, full-stack healthcare platform built with the **MERN sta
 
 ---
 
+## 🌐 Live Demo
+
+| App | URL |
+|-----|-----|
+| 🏠 **Patient Portal** | [doctorappointment-frontend-ten.vercel.app](https://doctorappointment-frontend-ten.vercel.app) |
+| 🔧 **Admin Panel** | [doctorappointment-admin-sigma.vercel.app](https://doctorappointment-admin-sigma.vercel.app) |
+| ⚙️ **Backend API** | [doctorappointment-backend-84ws.onrender.com](https://doctorappointment-backend-84ws.onrender.com) |
+
+> **Note:** Backend is hosted on Render free tier — first request may take ~30 seconds due to cold start.
+
+---
+
 ## ✨ Key Features
 
 ### 🔐 Role-Based Authentication (JWT)
@@ -25,13 +37,13 @@ A **production-ready**, full-stack healthcare platform built with the **MERN sta
 | Feature | Technology | Description |
 |---|---|---|
 | 🏥 Appointment Booking | MongoDB + Express | Slot-based booking with conflict detection |
-| 💳 Dual Payment Gateway | Razorpay + Stripe | Secure online payments with verification |
+| 💳 Stripe Payments | Stripe | Secure online payments with checkout & verification |
 | 💬 Real-Time Chat | Socket.io | Live doctor-patient messaging with persistent history |
 | 📋 Digital Prescriptions | PDFKit | Doctors write Rx → Patients download as PDF |
 | ⭐ Review & Rating | MongoDB + Zod | Validated reviews with average rating calculation |
 | 📄 Server-Side Pagination | MongoDB Skip/Limit | Optimized data loading with speciality filtering |
 | 🛡️ Security Hardening | Helmet + Rate Limit | XSS protection, CSRF, NoSQL injection prevention |
-| 📧 Email Notifications | Nodemailer | Transactional emails for bookings |
+| 📧 Email Notifications | Nodemailer + Gmail SMTP | Transactional emails for bookings |
 | ☁️ Image Uploads | Cloudinary + Multer | Profile pictures & doctor images |
 | 📊 Analytics Dashboard | Aggregation | Earnings, patient count, appointment stats |
 
@@ -77,14 +89,41 @@ prescripto/
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Deployment
+
+The project is deployed across three services:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                      ARCHITECTURE                        │
+│                                                          │
+│   Vercel                         Render.com              │
+│  ┌──────────────┐              ┌──────────────────┐     │
+│  │   Frontend    │──── API ───▶│   Backend API     │     │
+│  │  (React/Vite) │             │  (Node + Express  │     │
+│  └──────────────┘              │   + Socket.io)    │     │
+│  ┌──────────────┐              └────────┬─────────┘     │
+│  │  Admin Panel  │──── API ───▶         │               │
+│  │  (React/Vite) │                      │               │
+│  └──────────────┘              ┌────────▼─────────┐     │
+│                                │  MongoDB Atlas    │     │
+│                                │  Cloudinary       │     │
+│                                │  Stripe           │     │
+│                                │  Gmail SMTP       │     │
+│                                └──────────────────┘     │
+└─────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 💻 Local Development
 
 ### Prerequisites
 
 - **Node.js** v18+ 
 - **MongoDB Atlas** account (or local MongoDB)
 - **Cloudinary** account (for image uploads)
-- **Razorpay** and/or **Stripe** accounts (for payments)
+- **Stripe** account (for payments)
 
 ### 1. Clone the Repository
 
@@ -100,6 +139,34 @@ cp backend/.env.example backend/.env
 ```
 
 Edit `backend/.env` and fill in your credentials. See [`.env.example`](backend/.env.example) for all required variables.
+
+Required variables:
+
+| Variable | Description |
+|----------|-------------|
+| `MONGODB_URI` | MongoDB Atlas connection string |
+| `JWT_SECRET` | Secret key for JWT token signing |
+| `ADMIN_EMAIL` | Admin login email |
+| `ADMIN_PASSWORD` | Admin login password |
+| `CLOUDINARY_NAME` | Cloudinary cloud name |
+| `CLOUDINARY_API_KEY` | Cloudinary API key |
+| `CLOUDINARY_SECRET_KEY` | Cloudinary API secret |
+| `STRIPE_SECRET_KEY` | Stripe secret key (test or live) |
+| `CURRENCY` | Payment currency (e.g., `INR`) |
+| `EMAIL_HOST` | SMTP host (e.g., `smtp.gmail.com`) |
+| `EMAIL_PORT` | SMTP port (e.g., `587`) |
+| `EMAIL_USER` | SMTP email address |
+| `EMAIL_PASS` | SMTP app password |
+
+For the frontend and admin panels, create `.env` files with:
+
+```bash
+# frontend/.env
+VITE_BACKEND_URL=http://localhost:4000
+
+# admin/.env
+VITE_BACKEND_URL=http://localhost:4000
+```
 
 ### 3. Install Dependencies
 
@@ -141,7 +208,7 @@ Full API documentation with **32 endpoints**, WebSocket events, data models, and
 
 | Module | Endpoints | Auth |
 |---|---|---|
-| **User** | 14 endpoints | JWT (token) |
+| **User** | 12 endpoints | JWT (token) |
 | **Doctor** | 11 endpoints | JWT (dtoken) |
 | **Admin** | 7 endpoints | JWT (atoken) |
 | **WebSocket** | 3 events | Room-based |
@@ -158,7 +225,7 @@ Full API documentation with **32 endpoints**, WebSocket events, data models, and
 | **Zod Validation** | Input validation on registration, login, reviews, profile updates |
 | **JWT Auth** | Stateless authentication with role-based middleware |
 | **Bcrypt** | Password hashing with salt rounds |
-| **CORS** | Cross-Origin Resource Sharing configured |
+| **CORS** | Restricted to production frontend & admin domains |
 | **Morgan** | HTTP request logging for monitoring |
 
 ---
@@ -171,17 +238,13 @@ Full API documentation with **32 endpoints**, WebSocket events, data models, and
 | **Backend** | Node.js, Express.js, Socket.io, PDFKit |
 | **Database** | MongoDB Atlas, Mongoose ODM |
 | **Auth** | JWT, Bcrypt |
-| **Payments** | Razorpay SDK, Stripe SDK |
+| **Payments** | Stripe SDK |
 | **Validation** | Zod |
 | **Security** | Helmet, express-rate-limit, express-mongo-sanitize |
 | **File Storage** | Cloudinary, Multer |
+| **Email** | Nodemailer, Gmail SMTP |
+| **Hosting** | Vercel (Frontend/Admin), Render.com (Backend) |
 | **Dev Tools** | Morgan, dotenv, nodemon |
-
----
-
-## 📸 Screenshots
-
-> *Screenshots can be added here after deployment*
 
 ---
 
