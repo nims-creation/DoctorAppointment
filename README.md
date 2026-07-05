@@ -93,25 +93,46 @@ prescripto/
 
 The project is deployed across three services:
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                      ARCHITECTURE                        │
-│                                                          │
-│   Vercel                         Render.com              │
-│  ┌──────────────┐              ┌──────────────────┐     │
-│  │   Frontend    │──── API ───▶│   Backend API     │     │
-│  │  (React/Vite) │             │  (Node + Express  │     │
-│  └──────────────┘              │   + Socket.io)    │     │
-│  ┌──────────────┐              └────────┬─────────┘     │
-│  │  Admin Panel  │──── API ───▶         │               │
-│  │  (React/Vite) │                      │               │
-│  └──────────────┘              ┌────────▼─────────┐     │
-│                                │  MongoDB Atlas    │     │
-│                                │  Cloudinary       │     │
-│                                │  Stripe           │     │
-│                                │  Gmail SMTP       │     │
-│                                └──────────────────┘     │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+graph TD
+    %% Define Styles
+    classDef client fill:#3b82f6,stroke:#2563eb,stroke-width:2px,color:#fff,rx:8px,ry:8px;
+    classDef server fill:#10b981,stroke:#059669,stroke-width:2px,color:#fff,rx:8px,ry:8px;
+    classDef database fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#fff,rx:8px,ry:8px;
+    classDef external fill:#8b5cf6,stroke:#7c3aed,stroke-width:2px,color:#fff,rx:8px,ry:8px;
+
+    %% Client Layer (Vercel)
+    subgraph Vercel ["Vercel (Frontend & Admin)"]
+        A["Patient Portal<br/>(React + Vite)"]:::client
+        B["Admin/Doctor Panel<br/>(React + Vite)"]:::client
+    end
+
+    %% API Layer (Render.com)
+    subgraph Render ["Render.com (Backend)"]
+        C["Node.js + Express API<br/>& Socket.io Server"]:::server
+    end
+
+    %% Database Layer
+    subgraph Database ["Data & Storage"]
+        D[("MongoDB Atlas<br/>(Primary DB)")]:::database
+        E["Cloudinary<br/>(Image Storage)"]:::database
+    end
+
+    %% External Services
+    subgraph External ["External Services"]
+        F["Stripe<br/>(Payments)"]:::external
+        G["Gmail SMTP<br/>(Emails)"]:::external
+    end
+
+    %% Connections
+    A -- "REST API & WebSockets" --> C
+    B -- "REST API & WebSockets" --> C
+    
+    C -- "Mongoose" --> D
+    C -- "Upload via API" --> E
+    
+    C -- "Payment Intents" --> F
+    C -- "SMTP Auth" --> G
 ```
 
 ---
@@ -245,6 +266,17 @@ Full API documentation with **32 endpoints**, WebSocket events, data models, and
 | **Email** | Nodemailer, Gmail SMTP |
 | **Hosting** | Vercel (Frontend/Admin), Render.com (Backend) |
 | **Dev Tools** | Morgan, dotenv, nodemon |
+
+---
+
+## 📸 Screenshots
+
+### Patient Portal (Frontend)
+![Homepage](docs/assets/homepage.png)
+![Doctors Listing](docs/assets/doctors_page.png)
+
+### Admin Panel
+![Admin Login](docs/assets/admin_panel.png)
 
 ---
 
