@@ -5,17 +5,18 @@ const sendEmail = async (options) => {
     // For development, you can use a service like Mailtrap or Gmail. 
     // In production, use SendGrid, AWS SES, or similar.
     const transporter = nodemailer.createTransport({
-        host: process.env.EMAIL_HOST || 'smtp.mailtrap.io',
-        port: process.env.EMAIL_PORT || 2525,
+        host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+        port: process.env.EMAIL_PORT || 587,
+        secure: false, // true for 465, false for 587 (STARTTLS)
         auth: {
-            user: process.env.EMAIL_USER || 'default_user',
-            pass: process.env.EMAIL_PASS || 'default_pass'
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS
         }
     });
 
     // Define the email options
     const mailOptions = {
-        from: 'Prescripto <noreply@prescripto.com>',
+        from: `Prescripto <${process.env.EMAIL_USER || 'noreply@prescripto.com'}>`,
         to: options.email,
         subject: options.subject,
         text: options.message,
